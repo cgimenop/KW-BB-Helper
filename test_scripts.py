@@ -13,7 +13,7 @@ import openpyxl
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from read_excel_files import read_excel_files, load_settings, generate_classification_table
+from update_classification import read_excel_files, load_settings, generate_classification_table
 from generate_league import generate_league
 
 class TestReadExcelFiles(unittest.TestCase):
@@ -37,7 +37,7 @@ class TestReadExcelFiles(unittest.TestCase):
             settings = load_settings()
             self.assertEqual(settings["league_points"]["win"], 3)
     
-    @patch('read_excel_files.Path')
+    @patch('update_classification.Path')
     def test_read_excel_files_folder_not_exists(self, mock_path):
         """Test error when folder doesn't exist"""
         mock_path.return_value.exists.return_value = False
