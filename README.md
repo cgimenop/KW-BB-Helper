@@ -1,5 +1,15 @@
 # KW BB League - Excel Data Processor
 
+A Python tool for managing Blood Bowl league data, processing Excel match reports, and generating league classifications.
+
+## Features
+
+- **League Generation**: Create round-robin tournament schedules from team rosters
+- **Match Processing**: Read Excel match reports and extract team statistics
+- **Classification**: Generate league tables with points, wins, draws, losses
+- **Configurable Scoring**: Customizable point systems for league and star points
+- **Automated Reports**: Output JSON data and Markdown classification tables
+
 ## Installation
 
 1. Create virtual environment:
@@ -19,26 +29,57 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the script with the league folder path:
+### Generate League Schedule
+```bash
+python generate_league.py <roosters_folder_path>
+```
+
+### Process Match Results
 ```bash
 python read_excel_files.py <league_folder_path>
 ```
 
-### Example:
+### Examples
 ```bash
+python generate_league.py roosters
 python read_excel_files.py samples
 ```
 
 ## Folder Structure
 
-The league folder should contain subfolders for each match date (J1, J2, J3, etc.), with Excel files inside each subfolder.
+```
+project/
+├── roosters/           # Team roster files
+├── J1/, J2/, J3/...   # Match date folders (auto-generated)
+├── tests/output/       # Generated reports
+└── samples/clean/      # Excel template
+```
 
-## Output
+## Output Files
 
 - `tests/output/league_data.json` - Complete match data by dates and teams
-- `tests/output/classification.md` - League classification table in markdown format
+- `tests/output/classification.md` - League classification table
 
-## Configuration Files
+## Configuration
 
-- `league_points_cfg.json` - League points system (win=3, draw=1, lose=0)
-- `star_points_cfg.json` - Star points system for Blood Bowl rules
+- `league_points_cfg.json` - League points (win=3, draw=1, lose=0)
+- `star_points_cfg.json` - Blood Bowl star points system
+
+## Development
+
+### Run Tests
+```bash
+./scripts/run_coverage.sh
+```
+
+### Static Analysis
+```bash
+./scripts/run_static_analysis.sh
+```
+
+### Test Coverage
+Current coverage: **88%**
+
+## License
+
+MIT License - see LICENSE file for details
