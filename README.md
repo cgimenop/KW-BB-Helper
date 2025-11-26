@@ -36,17 +36,18 @@ python generate_league.py <roosters_folder_path>
 
 ### Process Match Results
 ```bash
-python read_excel_files.py <league_folder_path>
+python update_classification.py <league_folder_path>
 ```
 
 ### Examples
 ```bash
 python generate_league.py roosters
-python read_excel_files.py samples
+python update_classification.py samples
 ```
 
 ## Folder Structure
 
+### Single Division (Legacy)
 ```
 project/
 ├── roosters/           # Team roster files
@@ -55,10 +56,29 @@ project/
 └── samples/clean/      # Excel template
 ```
 
+### Multiple Divisions
+```
+project/
+├── roosters/           # Team roster files
+├── Division1/          # Division folder
+│   ├── J1/, J2/...    # Match date folders
+├── Division2/          # Division folder
+│   ├── J1/, J2/...    # Match date folders
+├── tests/output/       # Generated reports
+│   ├── Division1/     # Division-specific reports
+│   └── Division2/     # Division-specific reports
+└── samples/clean/      # Excel template
+```
+
 ## Output Files
 
+### Single Division
 - `tests/output/league_data.json` - Complete match data by dates and teams
 - `tests/output/classification.md` - League classification table
+
+### Multiple Divisions
+- `tests/output/league_data.json` - Complete match data by divisions, dates and teams
+- `tests/output/DivisionName/classification.md` - Division-specific classification tables
 
 ## Configuration
 

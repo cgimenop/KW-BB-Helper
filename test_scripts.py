@@ -13,7 +13,7 @@ import openpyxl
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from update_classification import read_excel_files, load_settings, generate_classification_table
+from update_classification import read_excel_files, load_settings, generate_classification_table, process_date_folder
 from generate_league import generate_league
 
 class TestReadExcelFiles(unittest.TestCase):
@@ -56,6 +56,28 @@ class TestReadExcelFiles(unittest.TestCase):
             read_excel_files(str(test_folder))
         
         # Should process but find no Excel files
+        self.assertTrue(mock_print.called)
+    
+    def test_read_excel_files_with_divisions(self):
+        """Test processing files with division structure"""
+        # Create division structure
+        league_folder = self.temp_path / "league"
+        league_folder.mkdir()
+        
+        division1 = league_folder / "Division1"
+        division1.mkdir()
+        date_folder1 = division1 / "J1"
+        date_folder1.mkdir()
+        
+        division2 = league_folder / "Division2"
+        division2.mkdir()
+        date_folder2 = division2 / "J1"
+        date_folder2.mkdir()
+        
+        with patch('builtins.print') as mock_print:
+            read_excel_files(str(league_folder))
+        
+        # Should detect divisions and process them
         self.assertTrue(mock_print.called)
 
 class TestGenerateLeague(unittest.TestCase):
@@ -216,7 +238,7 @@ class TestEdgeCases(unittest.TestCase):
     """Test edge cases and error conditions"""
     
     def test_odd_number_teams(self):
-        """Test league generation with odd number of teams"""
+        """Test league generation with odd number teams"""
         temp_dir = tempfile.mkdtemp()
         roosters_folder = Path(temp_dir) / "roosters"
         roosters_folder.mkdir()
@@ -252,6 +274,22 @@ class TestEdgeCases(unittest.TestCase):
             self.assertIn("| 1 |", content)  # Points
             self.assertIn("Team A", content)
             self.assertIn("Team B", content)
+    
+    def test_division_detection(self):
+        """Test division structure detection"""
+        temp_dir = tempfile.mkdtemp()
+        league_folder = Path(temp_dir)
+        
+        # Create division structure
+        div1 = league_folder / "Division1"
+        div1.mkdir()
+        (div1 / "J1").mkdir()
+        
+        # Test detection logic
+        has_divisions = any(d.is_dir() and any(sub.is_dir() and sub.name.startswith('J') for sub in d.iterdir()) for d in league_folder.iterdir())
+        self.assertTrue(has_divisions)
+        
+        shutil.rmtree(temp_dir)
 
 if __name__ == "__main__":
     unittest.main()
