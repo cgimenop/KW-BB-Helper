@@ -11,6 +11,9 @@ htmlcov/
 # Tests folder
 tests/
 
+# Workspace files
+*.code-workspace
+
 # Python cache
 __pycache__/
 *.pyc
