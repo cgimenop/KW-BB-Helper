@@ -10,6 +10,7 @@ htmlcov/
 
 # Tests folder
 tests/
+samples/Rondas
 
 # Workspace files
 *.code-workspace
