@@ -47,9 +47,9 @@ def extract_team_info(folder_path):
                 font_color = "#000000"  # Default black
                 background_color = "#ffffff"  # Default white
                 team_cell_bbox = None
-                
+
                 text_dict = page.get_text("dict")
-                
+
                 # Find the cell containing the team name
                 for block in text_dict["blocks"]:
                     if "lines" in block:
@@ -61,7 +61,7 @@ def extract_team_info(folder_path):
                                         font_color = f"#{font_color_int:06x}"
                                     team_cell_bbox = span["bbox"]
                                     break
-                
+
                 # Find background color from drawings overlapping the team name cell
                 if team_cell_bbox:
                     drawings = page.get_drawings()
@@ -84,6 +84,19 @@ def extract_team_info(folder_path):
                     "background_color": background_color
                 }
 
+                # Save logo as PNG file
+                if logo_base64:
+                    logos_folder = rooster_folder / "logos"
+                    logos_folder.mkdir(exist_ok=True)
+                    try:
+                        logo_data = base64.b64decode(logo_base64)
+                        logo_file = logos_folder / f"{team_name.replace(' ', '_').replace('/', '_')}.png"
+                        with open(logo_file, 'wb') as f:
+                            f.write(logo_data)
+                        print(f"Saved logo: {logo_file}")
+                    except Exception as e:
+                        print(f"Error saving logo for {team_name}: {e}")
+
                 doc.close()
                 print(f"Processed: {team_name} - Font: {font_color}, Background: {background_color}")
 
@@ -91,11 +104,9 @@ def extract_team_info(folder_path):
                 print(f"Error processing {pdf_file.name}: {e}")
 
     # Save to JSON in Roosters subfolder
-    roosters_folder = Path(folder_path) / "Roosters"
-    roosters_folder.mkdir(exist_ok=True)
-    output_file = roosters_folder / "teams_info.json"
-    with open(output_file, 'w') as f:
-        json.dump(teams_data, f, indent=2)
+    output_file = rooster_folder / "teams_info.json"
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(teams_data, f, indent=2, ensure_ascii=False)
 
     print(f"Team information saved to: {output_file}")
 

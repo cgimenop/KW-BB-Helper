@@ -3,7 +3,6 @@ import sys
 import json
 from pathlib import Path
 import pandas as pd
-import base64
 
 def load_settings():
     """Load point settings from league_points_cfg.json"""
@@ -121,12 +120,11 @@ def read_excel_files(folder_path):
 
             process_date_folder(date_folder, league_data[date_name], settings, folder_path)
 
-    output_folder = Path("tests/output")
-    output_folder.mkdir(parents=True, exist_ok=True)
+    output_folder = Path(folder_path)
     output_file = output_folder / "league_data.json"
 
-    with open(output_file, 'w') as f:
-        json.dump(league_data, f, indent=2)
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(league_data, f, indent=2, ensure_ascii=False)
 
     # Generate classification tables
     if has_divisions:
@@ -158,25 +156,14 @@ def load_team_info(league_path):
         print(f"Warning: teams_info.json not found at {path}")
     return {}
 
-def save_team_logos(teams_stats, output_folder):
-    """Save team logos as image files"""
-    logos_folder = output_folder / "logos"
-    logos_folder.mkdir(exist_ok=True)
+def get_logo_path(team, league_path):
+    """Get logo path for a team from Roosters/logos folder"""
+    logo_filename = f"{team.replace(' ', '_').replace('/', '_')}.png"
+    roosters_logo = Path(league_path) / "Roosters" / "logos" / logo_filename
     
-    for team, stats in teams_stats.items():
-        logo_base64 = stats.get('logo_base64', '')
-        if logo_base64:
-            try:
-                logo_data = base64.b64decode(logo_base64)
-                logo_file = logos_folder / f"{team.replace(' ', '_').replace('/', '_')}.png"
-                with open(logo_file, 'wb') as f:
-                    f.write(logo_data)
-                stats['logo_file'] = f"logos/{logo_file.name}"
-            except Exception as e:
-                print(f"Error saving logo for {team}: {e}")
-                stats['logo_file'] = None
-        else:
-            stats['logo_file'] = None
+    if roosters_logo.exists():
+        return f"Roosters/logos/{logo_filename}"
+    return None
 
 def generate_classification_table(league_data, output_folder, folder_path):
     """Generate classification table in markdown format"""
@@ -205,8 +192,9 @@ def generate_classification_table(league_data, output_folder, folder_path):
             else:
                 teams_stats[team]["losses"] += 1
 
-    # Save team logos as files
-    save_team_logos(teams_stats, output_folder)
+    # Set logo paths for teams
+    for team in teams_stats:
+        teams_stats[team]['logo_file'] = get_logo_path(team, folder_path)
 
     # Sort teams by points (descending)
     sorted_teams = sorted(teams_stats.items(), key=lambda x: x[1]["points"], reverse=True)
@@ -313,7 +301,8 @@ def generate_overall_classification(league_data, output_folder, folder_path):
         markdown += "|-----|------|-------|------|--------|---|---|---|----|\n"
 
         for pos, (team, stats) in enumerate(sorted_teams, 1):
-            logo = f"<img src='logos/{team.replace(' ', '_').replace('/', '_')}.png' width='20' height='20' alt='{team}'>" if stats.get('logo_base64') else "N/A"
+            logo_path = get_logo_path(team, folder_path)
+            logo = f"<img src='{logo_path}' width='20' height='20' alt='{team}'>" if logo_path else "N/A"
             bg_square = f"<span style='color:{stats.get('background_color', '#ffffff')}'>■</span>"
             font_square = f"<span style='color:{stats.get('font_color', '#000000')}'>■</span>"
             color = f"{bg_square}{font_square}"
@@ -347,11 +336,11 @@ def generate_overall_classification(league_data, output_folder, folder_path):
                         score = "- vs -"
                         status = "⏳ Pending"
                     
-                    # Get team logos from all_teams_stats
-                    team1_stats = all_teams_stats.get(team1, {})
-                    team2_stats = all_teams_stats.get(team2, {})
-                    team1_logo = f"<img src='logos/{team1.replace(' ', '_').replace('/', '_')}.png' width='20' height='20' alt='{team1}'> **{team1}**" if team1_stats.get('logo_base64') else f"**{team1}**"
-                    team2_logo = f"<img src='logos/{team2.replace(' ', '_').replace('/', '_')}.png' width='20' height='20' alt='{team2}'> **{team2}**" if team2_stats.get('logo_base64') else f"**{team2}**"
+                    # Get team logos
+                    team1_logo_path = get_logo_path(team1, folder_path)
+                    team2_logo_path = get_logo_path(team2, folder_path)
+                    team1_logo = f"<img src='{team1_logo_path}' width='20' height='20' alt='{team1}'> **{team1}**" if team1_logo_path else f"**{team1}**"
+                    team2_logo = f"<img src='{team2_logo_path}' width='20' height='20' alt='{team2}'> **{team2}**" if team2_logo_path else f"**{team2}**"
                     
                     markdown += f"| {match_num} | {team1_logo} | {score} | {team2_logo} | {status} |\n"
                     match_num += 1
@@ -359,8 +348,7 @@ def generate_overall_classification(league_data, output_folder, folder_path):
         
         markdown += "\n"
 
-    # Save all team logos
-    save_team_logos(all_teams_stats, output_folder)
+
 
     # Save markdown file
     markdown_file = output_folder / "league_classification.md"
