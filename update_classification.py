@@ -51,7 +51,8 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "rival": team_c,
                     "points": settings["league_points"][result_b],
                     "logo_base64": team_b_info.get("logo_base64", ""),
-                    "team_color": team_b_info.get("team_color", "#000000")
+                    "font_color": team_b_info.get("font_color", "#000000"),
+                    "background_color": team_b_info.get("background_color", "#ffffff")
                 }
 
             if team_c != "nan":
@@ -65,7 +66,8 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "rival": team_b,
                     "points": settings["league_points"][result_c],
                     "logo_base64": team_c_info.get("logo_base64", ""),
-                    "team_color": team_c_info.get("team_color", "#000000")
+                    "font_color": team_c_info.get("font_color", "#000000"),
+                    "background_color": team_c_info.get("background_color", "#ffffff")
                 }
 
             print(f"Processed: {date_folder.parent.name}/{date_folder.name}/{file_path.name} - {team_b} vs {team_c}")
@@ -189,7 +191,8 @@ def generate_classification_table(league_data, output_folder, folder_path):
                 teams_stats[team] = {
                     "points": 0, "wins": 0, "draws": 0, "losses": 0, "touchdowns": 0,
                     "logo_base64": data.get("logo_base64", ""),
-                    "team_color": data.get("team_color", "#000000")
+                    "font_color": data.get("font_color", "#000000"),
+                    "background_color": data.get("background_color", "#ffffff")
                 }
 
             teams_stats[team]["points"] += data["points"]
@@ -215,7 +218,9 @@ def generate_classification_table(league_data, output_folder, folder_path):
 
     for pos, (team, stats) in enumerate(sorted_teams, 1):
         logo = f"<img src='{stats['logo_file']}' width='20' height='20' alt='{team}'>" if stats.get('logo_file') else "N/A"
-        color = f"<span style='color:{stats.get('team_color', '#000000')}'>●</span>" if stats.get('team_color') else "N/A"
+        bg_square = f"<span style='color:{stats.get('background_color', '#ffffff')}'>■</span>"
+        font_square = f"<span style='color:{stats.get('font_color', '#000000')}'>■</span>"
+        color = f"{bg_square}{font_square}"
         markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} |\n"
 
     # Save markdown file
@@ -242,7 +247,8 @@ def generate_overall_classification(league_data, output_folder, folder_path):
                     teams_stats[team] = {
                         "points": 0, "wins": 0, "draws": 0, "losses": 0, "touchdowns": 0,
                         "logo_base64": data.get("logo_base64", ""),
-                        "team_color": data.get("team_color", "#000000")
+                        "font_color": data.get("font_color", "#000000"),
+                        "background_color": data.get("background_color", "#ffffff")
                     }
 
                 teams_stats[team]["points"] += data["points"]
@@ -268,7 +274,9 @@ def generate_overall_classification(league_data, output_folder, folder_path):
 
         for pos, (team, stats) in enumerate(sorted_teams, 1):
             logo = f"<img src='logos/{team.replace(' ', '_').replace('/', '_')}.png' width='20' height='20' alt='{team}'>" if stats.get('logo_base64') else "N/A"
-            color = f"<span style='color:{stats.get('team_color', '#000000')}'>●</span>" if stats.get('team_color') else "N/A"
+            bg_square = f"<span style='color:{stats.get('background_color', '#ffffff')}'>■</span>"
+            font_square = f"<span style='color:{stats.get('font_color', '#000000')}'>■</span>"
+            color = f"{bg_square}{font_square}"
             markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} |\n"
 
         markdown += "\n"
