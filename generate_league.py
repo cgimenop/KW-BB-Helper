@@ -44,7 +44,7 @@ def generate_division_schedule(teams):
     
     return schedule
 
-def generate_league(teams_json_path, output_folder, cross_division=False):
+def generate_league(teams_json_path, output_folder, cross_division=False, pairings_json=None):
     """Generate league pairings and create match templates for each division."""
     output_path = Path(output_folder)
     fixtures_path = output_path / "Fixtures"
@@ -75,39 +75,67 @@ def generate_league(teams_json_path, output_folder, cross_division=False):
     total_teams = 0
     total_matches = 0
     
-    # Generate fixtures for each division
-    for division_name, teams in divisions.items():
-        if len(teams) < 2:
-            print(f"Skipping {division_name}: Need at least 2 teams.")
-            continue
+    # Generate fixtures from JSON or automatically
+    if pairings_json:
+        with open(pairings_json, 'r') as f:
+            pairings = json.load(f)
         
-        division_folder = fixtures_path / division_name
-        division_folder.mkdir(exist_ok=True)
+        for round_name, round_divisions in pairings.items():
+            for division_name, matches in round_divisions.items():
+                division_folder = fixtures_path / division_name / round_name
+                division_folder.mkdir(parents=True, exist_ok=True)
+                
+                for i, match in enumerate(matches, 1):
+                    team1 = match['local']
+                    team2 = match['visitante']
+                    
+                    match_file = division_folder / f"Match_{i}_{team1}_vs_{team2}.xlsx"
+                    shutil.copy2(template_path, match_file)
+                    
+                    wb = openpyxl.load_workbook(match_file)
+                    ws = wb.active
+                    ws.cell(row=2, column=2, value=team1)
+                    ws.cell(row=2, column=3, value=team2)
+                    wb.save(match_file)
+                    
+                    print(f"Created: {match_file}")
+                    total_matches += 1
         
-        schedule = generate_division_schedule(teams.copy())
-        
-        for date_num, round_matches in enumerate(schedule, 1):
-            date_folder = division_folder / f"J{date_num}"
-            date_folder.mkdir(exist_ok=True)
+        print(f"\nGenerated {total_matches} matches from JSON pairings.")
+    else:
+        # Generate fixtures for each division
+        for division_name, teams in divisions.items():
+            if len(teams) < 2:
+                print(f"Skipping {division_name}: Need at least 2 teams.")
+                continue
             
-            for i, (team1, team2) in enumerate(round_matches, 1):
-                match_file = date_folder / f"Match_{i}_{team1}_vs_{team2}.xlsx"
-                shutil.copy2(template_path, match_file)
+            division_folder = fixtures_path / division_name
+            division_folder.mkdir(exist_ok=True)
+            
+            schedule = generate_division_schedule(teams.copy())
+            
+            for date_num, round_matches in enumerate(schedule, 1):
+                date_folder = division_folder / f"J{date_num}"
+                date_folder.mkdir(exist_ok=True)
                 
-                # Update team names in Excel file
-                wb = openpyxl.load_workbook(match_file)
-                ws = wb.active
-                ws.cell(row=2, column=2, value=team1)
-                ws.cell(row=2, column=3, value=team2)
-                wb.save(match_file)
-                
-                print(f"Created: {match_file}")
-        
-        division_matches = sum(len(round_matches) for round_matches in schedule)
-        total_teams += len([t for t in teams if t != 'BYE'])
-        total_matches += division_matches
-        
-        print(f"\n{division_name}: {len(teams)} teams, {division_matches} matches across {len(schedule)} dates.")
+                for i, (team1, team2) in enumerate(round_matches, 1):
+                    match_file = date_folder / f"Match_{i}_{team1}_vs_{team2}.xlsx"
+                    shutil.copy2(template_path, match_file)
+                    
+                    # Update team names in Excel file
+                    wb = openpyxl.load_workbook(match_file)
+                    ws = wb.active
+                    ws.cell(row=2, column=2, value=team1)
+                    ws.cell(row=2, column=3, value=team2)
+                    wb.save(match_file)
+                    
+                    print(f"Created: {match_file}")
+            
+            division_matches = sum(len(round_matches) for round_matches in schedule)
+            total_teams += len([t for t in teams if t != 'BYE'])
+            total_matches += division_matches
+            
+            print(f"\n{division_name}: {len(teams)} teams, {division_matches} matches across {len(schedule)} dates.")
     
     # Generate cross-division matches if requested
     if cross_division and len(divisions) > 1:
@@ -147,12 +175,18 @@ def generate_cross_division_matches(divisions):
     return generate_division_schedule(all_teams)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3 or len(sys.argv) > 4:
-        print("Usage: python generate_league.py <teams_json_path> <output_folder_path> [--cross-division]")
+    if len(sys.argv) < 3:
+        print("Usage: python generate_league.py <teams_json_path> <output_folder_path> [--cross-division] [--pairings-json <path>]")
         sys.exit(1)
     
     teams_json_path = sys.argv[1]
     output_folder = sys.argv[2]
-    cross_division = len(sys.argv) == 4 and sys.argv[3] == "--cross-division"
+    cross_division = "--cross-division" in sys.argv
     
-    generate_league(teams_json_path, output_folder, cross_division)
+    pairings_json = None
+    if "--pairings-json" in sys.argv:
+        idx = sys.argv.index("--pairings-json")
+        if idx + 1 < len(sys.argv):
+            pairings_json = sys.argv[idx + 1]
+    
+    generate_league(teams_json_path, output_folder, cross_division, pairings_json)
