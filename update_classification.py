@@ -223,6 +223,46 @@ def generate_classification_table(league_data, output_folder, folder_path):
         color = f"{bg_square}{font_square}"
         markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} |\n"
 
+    # Add calendar with results
+    markdown += "\n## Calendar\n\n"
+    
+    # Group matches by date
+    dates = sorted(league_data.keys())
+    for date in dates:
+        markdown += f"### {date}\n\n"
+        markdown += "| Match | Team 1 | Score | Team 2 | Status |\n"
+        markdown += "|:-----:|:-------|:-----:|:-------|:------:|\n"
+        
+        teams = league_data[date]
+        match_num = 1
+        
+        # Create match pairs
+        team_list = list(teams.keys())
+        for i in range(0, len(team_list), 2):
+            if i + 1 < len(team_list):
+                team1 = team_list[i]
+                team2 = team_list[i + 1]
+                data1 = teams[team1]
+                data2 = teams[team2]
+                
+                # Check if match was played
+                if str(data1['touchdowns']) != 'nan' and str(data2['touchdowns']) != 'nan':
+                    score = f"{data1['touchdowns']} - {data2['touchdowns']}"
+                    status = "✅ Played"
+                else:
+                    score = "- vs -"
+                    status = "⏳ Pending"
+                
+                # Get team logos
+                team1_stats = teams_stats.get(team1, {})
+                team2_stats = teams_stats.get(team2, {})
+                team1_logo = f"<img src='{team1_stats.get('logo_file', '')}' width='20' height='20' alt='{team1}'> **{team1}**" if team1_stats.get('logo_file') else f"**{team1}**"
+                team2_logo = f"<img src='{team2_stats.get('logo_file', '')}' width='20' height='20' alt='{team2}'> **{team2}**" if team2_stats.get('logo_file') else f"**{team2}**"
+                
+                markdown += f"| {match_num} | {team1_logo} | {score} | {team2_logo} | {status} |\n"
+                match_num += 1
+        markdown += "\n"
+
     # Save markdown file
     markdown_file = output_folder / "classification.md"
     with open(markdown_file, 'w') as f:
@@ -279,6 +319,44 @@ def generate_overall_classification(league_data, output_folder, folder_path):
             color = f"{bg_square}{font_square}"
             markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} |\n"
 
+        # Add calendar for this division
+        markdown += f"### {division_name} Calendar\n\n"
+        dates = sorted(division_data.keys())
+        for date in dates:
+            markdown += f"#### {date}\n\n"
+            markdown += "| Match | Team 1 | Score | Team 2 | Status |\n"
+            markdown += "|:-----:|:-------|:-----:|:-------|:------:|\n"
+            
+            teams = division_data[date]
+            match_num = 1
+            
+            # Create match pairs
+            team_list = list(teams.keys())
+            for i in range(0, len(team_list), 2):
+                if i + 1 < len(team_list):
+                    team1 = team_list[i]
+                    team2 = team_list[i + 1]
+                    data1 = teams[team1]
+                    data2 = teams[team2]
+                    
+                    # Check if match was played
+                    if str(data1['touchdowns']) != 'nan' and str(data2['touchdowns']) != 'nan':
+                        score = f"{data1['touchdowns']} - {data2['touchdowns']}"
+                        status = "✅ Played"
+                    else:
+                        score = "- vs -"
+                        status = "⏳ Pending"
+                    
+                    # Get team logos from all_teams_stats
+                    team1_stats = all_teams_stats.get(team1, {})
+                    team2_stats = all_teams_stats.get(team2, {})
+                    team1_logo = f"<img src='logos/{team1.replace(' ', '_').replace('/', '_')}.png' width='20' height='20' alt='{team1}'> **{team1}**" if team1_stats.get('logo_base64') else f"**{team1}**"
+                    team2_logo = f"<img src='logos/{team2.replace(' ', '_').replace('/', '_')}.png' width='20' height='20' alt='{team2}'> **{team2}**" if team2_stats.get('logo_base64') else f"**{team2}**"
+                    
+                    markdown += f"| {match_num} | {team1_logo} | {score} | {team2_logo} | {status} |\n"
+                    match_num += 1
+            markdown += "\n"
+        
         markdown += "\n"
 
     # Save all team logos
