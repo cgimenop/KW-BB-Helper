@@ -13,7 +13,7 @@ import openpyxl
 # Add current directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from update_classification import read_excel_files, load_settings, generate_classification_table, process_date_folder
+from update_classification import read_excel_files, load_settings, generate_classification_table, process_date_folder, load_team_info
 from generate_league import generate_league
 
 class TestReadExcelFiles(unittest.TestCase):
@@ -290,6 +290,35 @@ class TestEdgeCases(unittest.TestCase):
         self.assertTrue(has_divisions)
         
         shutil.rmtree(temp_dir)
+    
+    def test_load_team_info(self):
+        """Test loading team information"""
+        team_info = load_team_info()
+        # Should return dict even if file doesn't exist
+        self.assertIsInstance(team_info, dict)
+    
+    def test_classification_with_team_info(self):
+        """Test classification table generation with team info"""
+        sample_data = {
+            "J1": {
+                "Team A": {"touchdowns": 2, "result": "win", "points": 3},
+                "Team B": {"touchdowns": 1, "result": "lose", "points": 0}
+            }
+        }
+        
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_folder = Path(temp_dir)
+            generate_classification_table(sample_data, output_folder)
+            
+            markdown_file = output_folder / "classification.md"
+            self.assertTrue(markdown_file.exists())
+            
+            content = markdown_file.read_text()
+            # Check for new columns
+            self.assertIn("Logo", content)
+            self.assertIn("Color", content)
+            self.assertIn("Team A", content)
+            self.assertIn("Team B", content)
 
 if __name__ == "__main__":
     unittest.main()

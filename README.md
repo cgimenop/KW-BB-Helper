@@ -7,6 +7,8 @@ A Python tool for managing Blood Bowl league data, processing Excel match report
 - **League Generation**: Create round-robin tournament schedules from team rosters
 - **Match Processing**: Read Excel match reports and extract team statistics
 - **Classification**: Generate league tables with points, wins, draws, losses
+- **Team Information**: Extract team names, logos, and colors from PDF files
+- **Enhanced Tables**: Classification tables include team logos and colors
 - **Configurable Scoring**: Customizable point systems for league and star points
 - **Automated Reports**: Output JSON data and Markdown classification tables
 
@@ -31,7 +33,7 @@ pip install -r requirements.txt
 
 ### Generate League Schedule
 ```bash
-python generate_league.py <roosters_folder_path>
+python generate_league.py <teams_json_path> <output_folder_path> [--cross-division]
 ```
 
 ### Process Match Results
@@ -39,34 +41,40 @@ python generate_league.py <roosters_folder_path>
 python update_classification.py <league_folder_path>
 ```
 
+### Extract Team Information
+```bash
+python extract_team_info.py
+```
+
 ### Examples
 ```bash
-python generate_league.py roosters
-python update_classification.py samples
+# Generate division-only fixtures (default)
+python extract_team_info.py
+python generate_league.py tests/output/teams_info.json league_output
+python update_classification.py league_output
+
+# Generate with cross-division matches
+python generate_league.py tests/output/teams_info.json league_output --cross-division
 ```
 
 ## Folder Structure
 
-### Single Division (Legacy)
+### Workflow Structure
 ```
 project/
-├── roosters/           # Team roster files
-├── J1/, J2/, J3/...   # Match date folders (auto-generated)
-├── tests/output/       # Generated reports
-└── samples/clean/      # Excel template
-```
-
-### Multiple Divisions
-```
-project/
-├── roosters/           # Team roster files
-├── Division1/          # Division folder
-│   ├── J1/, J2/...    # Match date folders
-├── Division2/          # Division folder
-│   ├── J1/, J2/...    # Match date folders
-├── tests/output/       # Generated reports
-│   ├── Division1/     # Division-specific reports
-│   └── Division2/     # Division-specific reports
+├── Reference/          # Team PDF files (Grupo 1, Grupo 2)
+├── league_output/      # Generated league structure
+│   └── Fixtures/      # All match fixtures
+│       ├── Grupo 1/   # Division 1 fixtures
+│       │   ├── J1/, J2/... # Match date folders
+│       ├── Grupo 2/   # Division 2 fixtures
+│       │   ├── J1/, J2/... # Match date folders
+│       └── Cross-Division/ # Cross-division matches (optional)
+│           ├── J1/, J2/... # Match date folders
+├── tests/output/       # Generated reports and team info
+│   ├── teams_info.json # Extracted team information
+│   ├── league_data.json # Match results
+│   └── *.md           # Classification tables
 └── samples/clean/      # Excel template
 ```
 
@@ -79,6 +87,8 @@ project/
 ### Multiple Divisions
 - `tests/output/league_data.json` - Complete match data by divisions, dates and teams
 - `tests/output/DivisionName/classification.md` - Division-specific classification tables
+- `tests/output/league_classification.md` - Combined classification with all divisions
+- `tests/output/teams_info.json` - Team information (names, logos, colors)
 
 ## Configuration
 
