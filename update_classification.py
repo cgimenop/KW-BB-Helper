@@ -10,7 +10,14 @@ def load_settings():
         with open('league_points_cfg.json', 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        return {"league_points": {"win": 3, "draw": 1, "lose": 0}}
+        return {
+            "league_points": {"win": 3, "draw": 1, "lose": 0},
+            "sorting_criteria": [
+                {"field": "points", "order": "desc"},
+                {"field": "touchdowns", "order": "desc"},
+                {"field": "injuries", "order": "desc"}
+            ]
+        }
 
 def process_date_folder(date_folder, date_data, settings, league_path):
     """Process Excel files in a date folder."""
@@ -231,8 +238,21 @@ def generate_classification_table(league_data, output_folder, folder_path, is_di
         logo_path = get_logo_path(team, folder_path)
         teams_stats[team]['logo_file'] = f"{logo_prefix}{logo_path}" if logo_path else None
 
-    # Sort teams by points (descending)
-    sorted_teams = sorted(teams_stats.items(), key=lambda x: x[1]["points"], reverse=True)
+    # Sort teams using configurable criteria
+    sorting_criteria = settings.get("sorting_criteria", [
+        {"field": "points", "order": "desc"},
+        {"field": "touchdowns", "order": "desc"},
+        {"field": "injuries", "order": "desc"}
+    ])
+    
+    def sort_key(item):
+        team_stats = item[1]
+        return tuple(
+            team_stats.get(criterion["field"], 0) * (-1 if criterion["order"] == "desc" else 1)
+            for criterion in sorting_criteria
+        )
+    
+    sorted_teams = sorted(teams_stats.items(), key=sort_key)
 
     # Generate markdown table
     markdown = "# League Classification\n\n"
@@ -295,6 +315,7 @@ def generate_classification_table(league_data, output_folder, folder_path, is_di
 
 def generate_overall_classification(league_data, output_folder, folder_path):
     """Generate league classification with separate tables for each division"""
+    settings = load_settings()
     team_info = load_team_info(folder_path)
     markdown = "# League Classification\n\n"
     all_teams_stats = {}
@@ -329,8 +350,21 @@ def generate_overall_classification(league_data, output_folder, folder_path):
         # Collect all teams for logo saving
         all_teams_stats.update(teams_stats)
 
-        # Sort teams by points (descending)
-        sorted_teams = sorted(teams_stats.items(), key=lambda x: x[1]["points"], reverse=True)
+        # Sort teams using configurable criteria
+        sorting_criteria = settings.get("sorting_criteria", [
+            {"field": "points", "order": "desc"},
+            {"field": "touchdowns", "order": "desc"},
+            {"field": "injuries", "order": "desc"}
+        ])
+        
+        def sort_key(item):
+            team_stats = item[1]
+            return tuple(
+                team_stats.get(criterion["field"], 0) * (-1 if criterion["order"] == "desc" else 1)
+                for criterion in sorting_criteria
+            )
+        
+        sorted_teams = sorted(teams_stats.items(), key=sort_key)
 
         # Add division header and table
         markdown += f"## {division_name}\n\n"

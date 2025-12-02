@@ -3,5 +3,10 @@
     "win": 3,
     "draw": 1,
     "lose": 0
-  }
+  },
+  "sorting_criteria": [
+    {"field": "points", "order": "desc"},
+    {"field": "touchdowns", "order": "desc"},
+    {"field": "injuries", "order": "desc"}
+  ]
 }

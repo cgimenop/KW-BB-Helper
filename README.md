@@ -121,8 +121,53 @@ Injuries are tracked from the "Lesionados" row in match reports:
 
 ## Configuration
 
-- `league_points_cfg.json` - League points (win=3, draw=1, lose=0)
-- `star_points_cfg.json` - Blood Bowl star points system
+### league_points_cfg.json
+
+Configures league points and classification sorting criteria:
+
+```json
+{
+  "league_points": {
+    "win": 3,
+    "draw": 1,
+    "lose": 0
+  },
+  "sorting_criteria": [
+    {"field": "points", "order": "desc"},
+    {"field": "touchdowns", "order": "desc"},
+    {"field": "injuries", "order": "desc"}
+  ]
+}
+```
+
+**Sorting Criteria Options:**
+- `field`: Available fields are `"points"`, `"wins"`, `"draws"`, `"losses"`, `"touchdowns"`, `"injuries"`
+- `order`: Use `"desc"` for descending (highest first) or `"asc"` for ascending (lowest first)
+- Criteria are applied in order: first criterion is primary, second is tiebreaker, etc.
+
+**Example Configurations:**
+
+Prioritize wins over touchdowns:
+```json
+"sorting_criteria": [
+  {"field": "points", "order": "desc"},
+  {"field": "wins", "order": "desc"},
+  {"field": "touchdowns", "order": "desc"}
+]
+```
+
+Fewer injuries is better (defensive teams):
+```json
+"sorting_criteria": [
+  {"field": "points", "order": "desc"},
+  {"field": "touchdowns", "order": "desc"},
+  {"field": "injuries", "order": "asc"}
+]
+```
+
+### star_points_cfg.json
+
+Blood Bowl star points system configuration
 
 ## Technical Details
 
