@@ -22,19 +22,36 @@ def process_date_folder(date_folder, date_data, settings, league_path):
 
             # Team B (column B)
             team_b = str(df.iloc[1, 1]) if len(df) > 1 and len(df.columns) > 1 else "Unknown_B"
-            touchdowns_b = df.iloc[3, 1] if len(df) > 3 else 0
+            touchdowns_b = df.iloc[3, 1] if len(df) > 3 else None
 
             # Team C (column C)
             team_c = str(df.iloc[1, 2]) if len(df) > 1 and len(df.columns) > 2 else "Unknown_C"
-            touchdowns_c = df.iloc[3, 2] if len(df) > 3 else 0
+            touchdowns_c = df.iloc[3, 2] if len(df) > 3 else None
 
-            # Determine match result
-            if touchdowns_b > touchdowns_c:
-                result_b, result_c = "win", "lose"
-            elif touchdowns_b < touchdowns_c:
-                result_b, result_c = "lose", "win"
+            # Check if both touchdowns are empty (match not played)
+            td_b_empty = pd.isna(touchdowns_b) or str(touchdowns_b).strip() == ''
+            td_c_empty = pd.isna(touchdowns_c) or str(touchdowns_c).strip() == ''
+            
+            match_played = not (td_b_empty and td_c_empty)
+            
+            if match_played:
+                # If one is empty and the other has value, treat empty as 0
+                if td_b_empty:
+                    touchdowns_b = 0
+                if td_c_empty:
+                    touchdowns_c = 0
+
+                # Determine match result
+                if touchdowns_b > touchdowns_c:
+                    result_b, result_c = "win", "lose"
+                elif touchdowns_b < touchdowns_c:
+                    result_b, result_c = "lose", "win"
+                else:
+                    result_b = result_c = "draw"
             else:
-                result_b = result_c = "draw"
+                # Match not played - keep as pending
+                result_b = result_c = "pending"
+                touchdowns_b = touchdowns_c = float('nan')
 
             # Load team info for logos and colors
             team_info = load_team_info(league_path)
@@ -48,7 +65,7 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "attendants": df.iloc[6, 1] if len(df) > 6 else 0,
                     "result": result_b,
                     "rival": team_c,
-                    "points": settings["league_points"][result_b],
+                    "points": settings["league_points"][result_b] if match_played else 0,
                     "logo_base64": team_b_info.get("logo_base64", ""),
                     "font_color": team_b_info.get("font_color", "#000000"),
                     "background_color": team_b_info.get("background_color", "#ffffff")
@@ -63,7 +80,7 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "attendants": df.iloc[6, 2] if len(df) > 6 else 0,
                     "result": result_c,
                     "rival": team_b,
-                    "points": settings["league_points"][result_c],
+                    "points": settings["league_points"][result_c] if match_played else 0,
                     "logo_base64": team_c_info.get("logo_base64", ""),
                     "font_color": team_c_info.get("font_color", "#000000"),
                     "background_color": team_c_info.get("background_color", "#ffffff")
@@ -182,15 +199,16 @@ def generate_classification_table(league_data, output_folder, folder_path):
                     "background_color": data.get("background_color", "#ffffff")
                 }
 
-            teams_stats[team]["points"] += data["points"]
-            teams_stats[team]["touchdowns"] += data["touchdowns"]
+            if data["result"] != "pending":
+                teams_stats[team]["points"] += data["points"]
+                teams_stats[team]["touchdowns"] += data["touchdowns"]
 
-            if data["result"] == "win":
-                teams_stats[team]["wins"] += 1
-            elif data["result"] == "draw":
-                teams_stats[team]["draws"] += 1
-            else:
-                teams_stats[team]["losses"] += 1
+                if data["result"] == "win":
+                    teams_stats[team]["wins"] += 1
+                elif data["result"] == "draw":
+                    teams_stats[team]["draws"] += 1
+                elif data["result"] == "lose":
+                    teams_stats[team]["losses"] += 1
 
     # Set logo paths for teams
     for team in teams_stats:
@@ -279,15 +297,16 @@ def generate_overall_classification(league_data, output_folder, folder_path):
                         "background_color": data.get("background_color", "#ffffff")
                     }
 
-                teams_stats[team]["points"] += data["points"]
-                teams_stats[team]["touchdowns"] += data["touchdowns"]
+                if data["result"] != "pending":
+                    teams_stats[team]["points"] += data["points"]
+                    teams_stats[team]["touchdowns"] += data["touchdowns"]
 
-                if data["result"] == "win":
-                    teams_stats[team]["wins"] += 1
-                elif data["result"] == "draw":
-                    teams_stats[team]["draws"] += 1
-                else:
-                    teams_stats[team]["losses"] += 1
+                    if data["result"] == "win":
+                        teams_stats[team]["wins"] += 1
+                    elif data["result"] == "draw":
+                        teams_stats[team]["draws"] += 1
+                    elif data["result"] == "lose":
+                        teams_stats[team]["losses"] += 1
 
         # Collect all teams for logo saving
         all_teams_stats.update(teams_stats)
