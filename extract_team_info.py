@@ -6,6 +6,8 @@ from pathlib import Path
 import fitz  # PyMuPDF
 from PIL import Image
 import io
+import html
+import unicodedata
 
 def extract_team_info(folder_path):
     """Extract team information from PDFs in Rooster subfolder."""
@@ -26,7 +28,7 @@ def extract_team_info(folder_path):
 
     for pdf_file in pdf_files:
             try:
-                team_name = pdf_file.stem
+                team_name = unicodedata.normalize('NFC', html.unescape(pdf_file.stem))
                 doc = fitz.open(pdf_file)
                 page = doc[0]  # First page
 
@@ -55,7 +57,8 @@ def extract_team_info(folder_path):
                     if "lines" in block:
                         for line in block["lines"]:
                             for span in line["spans"]:
-                                if team_name.lower() in span["text"].lower():
+                                span_text = unicodedata.normalize('NFC', html.unescape(span["text"]))
+                                if team_name.lower() in span_text.lower():
                                     font_color_int = span.get("color", 0)
                                     if font_color_int != 0:
                                         font_color = f"#{font_color_int:06x}"
