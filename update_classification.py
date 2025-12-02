@@ -150,7 +150,7 @@ def read_excel_files(folder_path):
             if isinstance(division_data, dict) and division_data:
                 division_output_folder = output_folder / division_name
                 division_output_folder.mkdir(exist_ok=True)
-                generate_classification_table(division_data, division_output_folder, folder_path)
+                generate_classification_table(division_data, division_output_folder, folder_path, is_division=True)
 
         # Generate overall league classification
         generate_overall_classification(league_data, output_folder, folder_path)
@@ -182,7 +182,7 @@ def get_logo_path(team, league_path):
         return f"Roosters/logos/{logo_filename}"
     return None
 
-def generate_classification_table(league_data, output_folder, folder_path):
+def generate_classification_table(league_data, output_folder, folder_path, is_division=False):
     """Generate classification table in markdown format"""
     settings = load_settings()
     team_info = load_team_info(folder_path)
@@ -211,8 +211,10 @@ def generate_classification_table(league_data, output_folder, folder_path):
                     teams_stats[team]["losses"] += 1
 
     # Set logo paths for teams
+    logo_prefix = "../" if is_division else ""
     for team in teams_stats:
-        teams_stats[team]['logo_file'] = get_logo_path(team, folder_path)
+        logo_path = get_logo_path(team, folder_path)
+        teams_stats[team]['logo_file'] = f"{logo_prefix}{logo_path}" if logo_path else None
 
     # Sort teams by points (descending)
     sorted_teams = sorted(teams_stats.items(), key=lambda x: x[1]["points"], reverse=True)
