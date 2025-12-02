@@ -62,6 +62,23 @@ def extract_team_info(folder_path):
                                     team_cell_bbox = span["bbox"]
                                     break
 
+                # If team name not found in text, try to find colors from first colored text
+                if team_cell_bbox is None:
+                    print(f"Warning: Team name '{team_name}' not found in PDF text. Using first colored cell.")
+                    for block in text_dict["blocks"]:
+                        if "lines" in block:
+                            for line in block["lines"]:
+                                for span in line["spans"]:
+                                    font_color_int = span.get("color", 0)
+                                    if font_color_int != 0 and font_color_int != 0xffffff:  # Not black or white
+                                        font_color = f"#{font_color_int:06x}"
+                                        team_cell_bbox = span["bbox"]
+                                        break
+                                if team_cell_bbox:
+                                    break
+                        if team_cell_bbox:
+                            break
+
                 # Find background color from drawings overlapping the team name cell
                 if team_cell_bbox:
                     drawings = page.get_drawings()
@@ -76,6 +93,8 @@ def extract_team_info(folder_path):
                                     r, g, b = [int(c * 255) for c in fill_color[:3]]
                                     background_color = f"#{r:02x}{g:02x}{b:02x}"
                                     break
+                else:
+                    print(f"Warning: Could not find any colored text for '{team_name}'. Using defaults.")
 
                 teams_data[team_name] = {
                     "team_name": team_name,
