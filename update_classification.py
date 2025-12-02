@@ -27,6 +27,18 @@ def process_date_folder(date_folder, date_data, settings, league_path):
             # Team C (column C)
             team_c = str(df.iloc[1, 2]) if len(df) > 1 and len(df.columns) > 2 else "Unknown_C"
             touchdowns_c = df.iloc[3, 2] if len(df) > 3 else None
+            
+            # Find Lesionados row and extract injuries
+            injuries_b = 0
+            injuries_c = 0
+            for idx, row in df.iterrows():
+                if str(row[0]).strip() == "Lesionados":
+                    # Count injuries by splitting comma-separated player numbers
+                    injuries_b_str = str(row[1]).strip() if pd.notna(row[1]) else ''
+                    injuries_c_str = str(row[2]).strip() if pd.notna(row[2]) else ''
+                    injuries_b = len([x for x in injuries_b_str.split(',') if x.strip()]) if injuries_b_str else 0
+                    injuries_c = len([x for x in injuries_c_str.split(',') if x.strip()]) if injuries_c_str else 0
+                    break
 
             # Check if both touchdowns are empty (match not played)
             td_b_empty = pd.isna(touchdowns_b) or str(touchdowns_b).strip() == ''
@@ -63,6 +75,7 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "cash": df.iloc[4, 1] if len(df) > 4 else 0,
                     "fans": df.iloc[5, 1] if len(df) > 5 else 0,
                     "attendants": df.iloc[6, 1] if len(df) > 6 else 0,
+                    "injuries": injuries_b,
                     "result": result_b,
                     "rival": team_c,
                     "points": settings["league_points"][result_b] if match_played else 0,
@@ -78,6 +91,7 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "cash": df.iloc[4, 2] if len(df) > 4 else 0,
                     "fans": df.iloc[5, 2] if len(df) > 5 else 0,
                     "attendants": df.iloc[6, 2] if len(df) > 6 else 0,
+                    "injuries": injuries_c,
                     "result": result_c,
                     "rival": team_b,
                     "points": settings["league_points"][result_c] if match_played else 0,
@@ -193,7 +207,7 @@ def generate_classification_table(league_data, output_folder, folder_path, is_di
         for team, data in teams.items():
             if team not in teams_stats:
                 teams_stats[team] = {
-                    "points": 0, "wins": 0, "draws": 0, "losses": 0, "touchdowns": 0,
+                    "points": 0, "wins": 0, "draws": 0, "losses": 0, "touchdowns": 0, "injuries": 0,
                     "logo_base64": data.get("logo_base64", ""),
                     "font_color": data.get("font_color", "#000000"),
                     "background_color": data.get("background_color", "#ffffff")
@@ -202,6 +216,7 @@ def generate_classification_table(league_data, output_folder, folder_path, is_di
             if data["result"] != "pending":
                 teams_stats[team]["points"] += data["points"]
                 teams_stats[team]["touchdowns"] += data["touchdowns"]
+                teams_stats[team]["injuries"] += data.get("injuries", 0)
 
                 if data["result"] == "win":
                     teams_stats[team]["wins"] += 1
@@ -221,15 +236,15 @@ def generate_classification_table(league_data, output_folder, folder_path, is_di
 
     # Generate markdown table
     markdown = "# League Classification\n\n"
-    markdown += "| Pos | Logo | Color | Team | Points | W | D | L | TD |\n"
-    markdown += "|-----|------|-------|------|--------|---|---|---|----|\n"
+    markdown += "| Pos | Logo | Color | Team | Points | W | D | L | TD | INJ |\n"
+    markdown += "|-----|------|-------|------|--------|---|---|---|----|-----|\n"
 
     for pos, (team, stats) in enumerate(sorted_teams, 1):
         logo = f"<img src='{stats['logo_file']}' width='20' height='20' alt='{team}'>" if stats.get('logo_file') else "N/A"
         bg_square = f"<span style='color:{stats.get('background_color', '#ffffff')}'>■</span>"
         font_square = f"<span style='color:{stats.get('font_color', '#000000')}'>■</span>"
         color = f"{bg_square}{font_square}"
-        markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} |\n"
+        markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} | {stats['injuries']} |\n"
 
     # Add calendar with results
     markdown += "\n## Calendar\n\n"
@@ -293,7 +308,7 @@ def generate_overall_classification(league_data, output_folder, folder_path):
             for team, data in teams.items():
                 if team not in teams_stats:
                     teams_stats[team] = {
-                        "points": 0, "wins": 0, "draws": 0, "losses": 0, "touchdowns": 0,
+                        "points": 0, "wins": 0, "draws": 0, "losses": 0, "touchdowns": 0, "injuries": 0,
                         "logo_base64": data.get("logo_base64", ""),
                         "font_color": data.get("font_color", "#000000"),
                         "background_color": data.get("background_color", "#ffffff")
@@ -302,6 +317,7 @@ def generate_overall_classification(league_data, output_folder, folder_path):
                 if data["result"] != "pending":
                     teams_stats[team]["points"] += data["points"]
                     teams_stats[team]["touchdowns"] += data["touchdowns"]
+                    teams_stats[team]["injuries"] += data.get("injuries", 0)
 
                     if data["result"] == "win":
                         teams_stats[team]["wins"] += 1
@@ -318,8 +334,8 @@ def generate_overall_classification(league_data, output_folder, folder_path):
 
         # Add division header and table
         markdown += f"## {division_name}\n\n"
-        markdown += "| Pos | Logo | Color | Team | Points | W | D | L | TD |\n"
-        markdown += "|-----|------|-------|------|--------|---|---|---|----|\n"
+        markdown += "| Pos | Logo | Color | Team | Points | W | D | L | TD | INJ |\n"
+        markdown += "|-----|------|-------|------|--------|---|---|---|----|-----|\n"
 
         for pos, (team, stats) in enumerate(sorted_teams, 1):
             logo_path = get_logo_path(team, folder_path)
@@ -327,7 +343,7 @@ def generate_overall_classification(league_data, output_folder, folder_path):
             bg_square = f"<span style='color:{stats.get('background_color', '#ffffff')}'>■</span>"
             font_square = f"<span style='color:{stats.get('font_color', '#000000')}'>■</span>"
             color = f"{bg_square}{font_square}"
-            markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} |\n"
+            markdown += f"| {pos} | {logo} | {color} | {team} | {stats['points']} | {stats['wins']} | {stats['draws']} | {stats['losses']} | {stats['touchdowns']} | {stats['injuries']} |\n"
 
         # Add calendar for this division
         markdown += f"### {division_name} Calendar\n\n"

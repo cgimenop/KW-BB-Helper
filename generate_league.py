@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from itertools import combinations
 import openpyxl
+import random
 
 
 
@@ -44,8 +45,11 @@ def generate_division_schedule(teams):
     
     return schedule
 
-def generate_league(teams_json_path, output_folder, cross_division=False, pairings_json=None):
+def generate_league(teams_json_path, output_folder, cross_division=False, pairings_json=None, test_mode=False):
     """Generate league pairings and create match templates for each division."""
+    if test_mode:
+        print("[DEBUG] Test mode is active in generate_league function")
+    
     output_path = Path(output_folder)
     fixtures_path = output_path / "Fixtures"
     
@@ -96,9 +100,27 @@ def generate_league(teams_json_path, output_folder, cross_division=False, pairin
                     ws = wb.active
                     ws.cell(row=2, column=2, value=team1)
                     ws.cell(row=2, column=3, value=team2)
-                    wb.save(match_file)
                     
-                    print(f"Created: {match_file}")
+                    if test_mode:
+                        # Add random touchdowns (0-5)
+                        td1 = random.randint(0, 5)
+                        td2 = random.randint(0, 5)
+                        ws.cell(row=4, column=2, value=td1)
+                        ws.cell(row=4, column=3, value=td2)
+                        
+                        # Add random injuries (0-5 player numbers between 1-15)
+                        injury_count_b = random.randint(0, 5)
+                        injury_count_c = random.randint(0, 5)
+                        injuries_b = ','.join(str(random.randint(1, 15)) for _ in range(injury_count_b)) if injury_count_b > 0 else ''
+                        injuries_c = ','.join(str(random.randint(1, 15)) for _ in range(injury_count_c)) if injury_count_c > 0 else ''
+                        ws.cell(row=14, column=2, value=injuries_b)
+                        ws.cell(row=14, column=3, value=injuries_c)
+                        
+                        print(f"Created: {match_file} - {team1} {td1}-{td2} {team2} (INJ: {injury_count_b}-{injury_count_c})")
+                    else:
+                        print(f"Created: {match_file}")
+                    
+                    wb.save(match_file)
                     total_matches += 1
         
         print(f"\nGenerated {total_matches} matches from JSON pairings.")
@@ -127,9 +149,27 @@ def generate_league(teams_json_path, output_folder, cross_division=False, pairin
                     ws = wb.active
                     ws.cell(row=2, column=2, value=team1)
                     ws.cell(row=2, column=3, value=team2)
-                    wb.save(match_file)
                     
-                    print(f"Created: {match_file}")
+                    if test_mode:
+                        # Add random touchdowns (0-5)
+                        td1 = random.randint(0, 5)
+                        td2 = random.randint(0, 5)
+                        ws.cell(row=4, column=2, value=td1)
+                        ws.cell(row=4, column=3, value=td2)
+                        
+                        # Add random injuries (0-5 player numbers between 1-15)
+                        injury_count_b = random.randint(0, 5)
+                        injury_count_c = random.randint(0, 5)
+                        injuries_b = ','.join(str(random.randint(1, 15)) for _ in range(injury_count_b)) if injury_count_b > 0 else ''
+                        injuries_c = ','.join(str(random.randint(1, 15)) for _ in range(injury_count_c)) if injury_count_c > 0 else ''
+                        ws.cell(row=14, column=2, value=injuries_b)
+                        ws.cell(row=14, column=3, value=injuries_c)
+                        
+                        print(f"Created: {match_file} - {team1} {td1}-{td2} {team2} (INJ: {injury_count_b}-{injury_count_c})")
+                    else:
+                        print(f"Created: {match_file}")
+                    
+                    wb.save(match_file)
             
             division_matches = sum(len(round_matches) for round_matches in schedule)
             total_teams += len([t for t in teams if t != 'BYE'])
@@ -156,9 +196,27 @@ def generate_league(teams_json_path, output_folder, cross_division=False, pairin
                     ws = wb.active
                     ws.cell(row=2, column=2, value=team1)
                     ws.cell(row=2, column=3, value=team2)
-                    wb.save(match_file)
                     
-                    print(f"Created: {match_file}")
+                    if test_mode:
+                        # Add random touchdowns (0-5)
+                        td1 = random.randint(0, 5)
+                        td2 = random.randint(0, 5)
+                        ws.cell(row=4, column=2, value=td1)
+                        ws.cell(row=4, column=3, value=td2)
+                        
+                        # Add random injuries (0-5 player numbers between 1-15)
+                        injury_count_b = random.randint(0, 5)
+                        injury_count_c = random.randint(0, 5)
+                        injuries_b = ','.join(str(random.randint(1, 15)) for _ in range(injury_count_b)) if injury_count_b > 0 else ''
+                        injuries_c = ','.join(str(random.randint(1, 15)) for _ in range(injury_count_c)) if injury_count_c > 0 else ''
+                        ws.cell(row=14, column=2, value=injuries_b)
+                        ws.cell(row=14, column=3, value=injuries_c)
+                        
+                        print(f"Created: {match_file} - {team1} {td1}-{td2} {team2} (INJ: {injury_count_b}-{injury_count_c})")
+                    else:
+                        print(f"Created: {match_file}")
+                    
+                    wb.save(match_file)
             
             cross_match_count = sum(len(round_matches) for round_matches in cross_matches)
             total_matches += cross_match_count
@@ -176,12 +234,16 @@ def generate_cross_division_matches(divisions):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python generate_league.py <teams_json_path> <output_folder_path> [--cross-division] [--pairings-json <path>]")
+        print("Usage: python generate_league.py <teams_json_path> <output_folder_path> [--cross-division] [--pairings-json <path>] [--test-mode]")
         sys.exit(1)
     
     teams_json_path = sys.argv[1]
     output_folder = sys.argv[2]
     cross_division = "--cross-division" in sys.argv
+    test_mode = "--test-mode" in sys.argv
+    
+    if test_mode:
+        print("TEST MODE ENABLED: Generating random match data")
     
     pairings_json = None
     if "--pairings-json" in sys.argv:
@@ -189,4 +251,4 @@ if __name__ == "__main__":
         if idx + 1 < len(sys.argv):
             pairings_json = sys.argv[idx + 1]
     
-    generate_league(teams_json_path, output_folder, cross_division, pairings_json)
+    generate_league(teams_json_path, output_folder, cross_division, pairings_json, test_mode)
