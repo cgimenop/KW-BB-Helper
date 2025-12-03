@@ -65,21 +65,21 @@ The script expects a league folder with the following structure:
 **Option 1: Pre-organized divisions**
 ```
 league_output/
-└── Roosters/
-    ├── Grupo 1/
+└── Rosters/
+    ├── Division 1/
     │   ├── Team1.pdf
     │   ├── Team2.pdf
     │   └── Team3.pdf
-    └── Grupo 2/
+    └── Division 2/
         ├── Team4.pdf
         ├── Team5.pdf
         └── Team6.pdf
 ```
 
-**Option 2: All teams in Roosters (use --divisions flag)**
+**Option 2: All teams in Rosters (use --divisions flag)**
 ```
 league_output/
-└── Roosters/
+└── Rosters/
     ├── Team1.pdf
     ├── Team2.pdf
     ├── Team3.pdf
@@ -94,25 +94,25 @@ After running `generate_league.py` and `update_classification.py`:
 
 ```
 league_output/
-├── Roosters/
-│   ├── Grupo 1/          # Division folders with team PDFs
-│   └── Grupo 2/
+├── Rosters/
+│   ├── Division 1/          # Division folders with team PDFs
+│   └── Division 2/
 ├── Fixtures/
 │   ├── fixtures.json     # Generated fixtures in JSON format
-│   ├── Grupo 1/
+│   ├── Division 1/
 │   │   ├── J1/           # Match date folders
 │   │   │   ├── Match_1_Team1_vs_Team2.xlsx
 │   │   │   └── Match_2_Team3_vs_Team4.xlsx
 │   │   └── J2/
-│   └── Grupo 2/
+│   └── Division 2/
 │       ├── J1/
 │       └── J2/
 └── Classification/
     ├── league_data.json           # Complete match data
     ├── league_classification.md   # Overall classification
-    ├── Grupo 1/
+    ├── Division 1/
     │   └── classification.md      # Division-specific classification
-    └── Grupo 2/
+    └── Division 2/
         └── classification.md
 ```
 
@@ -120,12 +120,12 @@ league_output/
 
 ### Fixtures Folder
 - `Fixtures/fixtures.json` - Generated fixtures in JSON format (compatible with manual pairings)
-- `Fixtures/Grupo X/JY/*.xlsx` - Excel match report templates
+- `Fixtures/Division X/JY/*.xlsx` - Excel match report templates
 
 ### Classification Folder
 - `Classification/league_data.json` - Complete match data by divisions, dates and teams
 - `Classification/league_classification.md` - Combined classification with all divisions
-- `Classification/Grupo X/classification.md` - Division-specific classification tables
+- `Classification/Division X/classification.md` - Division-specific classification tables
 
 ## Match Processing
 
@@ -180,7 +180,7 @@ Blood Bowl star points system configuration
 ### 1. Generate League
 
 The `generate_league.py` script:
-- Scans the `Roosters` folder for team PDF files
+- Scans the `Rosters` folder for team PDF files
 - Detects existing divisions (subfolders) or creates them with `--divisions` flag
 - Generates round-robin schedules for each division
 - Creates Excel match report templates in `Fixtures/` folder
@@ -188,7 +188,7 @@ The `generate_league.py` script:
 
 ### 2. Fill Match Reports
 
-Manually fill in the Excel files in `Fixtures/Grupo X/JY/` with:
+Manually fill in the Excel files in `Fixtures/Division X/JY/` with:
 - Touchdowns (row 4, columns B and C)
 - Leave empty if match not played
 

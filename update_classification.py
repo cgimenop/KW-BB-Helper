@@ -305,7 +305,7 @@ def generate_overall_classification(league_data, output_folder, fixtures_folder)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python read_excel_files.py <league_folder_path>")
+        print("Usage: python update_classification.py <league_folder_path>")
         sys.exit(1)
     
     folder_path = sys.argv[1]

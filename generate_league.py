@@ -12,9 +12,9 @@ def generate_league(roosters_folder, num_divisions=None):
     roosters_path = Path(roosters_folder)
     fixtures_data = {}
     
-    # If path is a directory, look for Roosters subfolder
+    # If path is a directory, look for Rosters subfolder
     if roosters_path.is_dir() and not any(roosters_path.glob("*.pdf")):
-        potential_roosters = roosters_path / "Roosters"
+        potential_roosters = roosters_path / "Rosters"
         if potential_roosters.exists():
             roosters_path = potential_roosters
     
@@ -149,7 +149,7 @@ def generate_division_league(teams, parent_dir, division_name=None):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python generate_league.py <roosters_folder_path> [--divisions N]")
+        print("Usage: python generate_league.py <league_folder_path> [--divisions N]")
         sys.exit(1)
     
     roosters_folder = sys.argv[1]
