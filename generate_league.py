@@ -2,10 +2,21 @@
 import sys
 import shutil
 import json
+import logging
 from pathlib import Path
 from itertools import combinations
 import openpyxl
 import random
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('generate_league.log'),
+        logging.StreamHandler()
+    ]
+)
 
 def generate_league(roosters_folder, num_divisions=None, pairings_file=None):
     """Generate league pairings and create match templates."""
@@ -24,7 +35,7 @@ def generate_league(roosters_folder, num_divisions=None, pairings_file=None):
             roosters_path = potential_roosters
     
     if not roosters_path.exists():
-        print(f"Error: Folder '{roosters_folder}' does not exist.")
+        logging.error(f"Folder '{roosters_folder}' does not exist.")
         return
     
     # Check for division subfolders
@@ -36,7 +47,7 @@ def generate_league(roosters_folder, num_divisions=None, pairings_file=None):
             division_name = division_folder.name
             teams = [f.stem for f in division_folder.glob("*.pdf")]
             if len(teams) >= 2:
-                print(f"\nProcessing division: {division_name}")
+                logging.info(f"Processing division: {division_name}")
                 division_fixtures = generate_division_league(teams, roosters_path.parent, division_name)
                 if division_fixtures:
                     fixtures_data[division_name] = division_fixtures
@@ -46,13 +57,13 @@ def generate_league(roosters_folder, num_divisions=None, pairings_file=None):
     teams = [f.stem for f in roosters_path.glob("*.pdf")]
     
     if len(teams) < 2:
-        print("Need at least 2 teams to generate a league.")
+        logging.error("Need at least 2 teams to generate a league.")
         return
     
     # If num_divisions specified, split teams randomly
     if num_divisions and num_divisions > 1:
         if len(teams) % num_divisions != 0:
-            print(f"Error: Cannot split {len(teams)} teams evenly into {num_divisions} divisions.")
+            logging.error(f"Cannot split {len(teams)} teams evenly into {num_divisions} divisions.")
             return
         
         # Shuffle and split teams
@@ -62,7 +73,7 @@ def generate_league(roosters_folder, num_divisions=None, pairings_file=None):
         for i in range(num_divisions):
             division_name = f"Division {i + 1}"
             division_teams = teams[i * teams_per_division:(i + 1) * teams_per_division]
-            print(f"\nProcessing division: {division_name}")
+            logging.info(f"Processing division: {division_name}")
             division_fixtures = generate_division_league(division_teams, roosters_path.parent, division_name)
             if division_fixtures:
                 fixtures_data[division_name] = division_fixtures
@@ -73,7 +84,7 @@ def generate_league(roosters_folder, num_divisions=None, pairings_file=None):
     fixtures_file = roosters_path.parent / "Fixtures" / "fixtures.json"
     with open(fixtures_file, 'w', encoding='utf-8') as f:
         json.dump(fixtures_data, f, indent=2, ensure_ascii=False)
-    print(f"\nFixtures saved to: {fixtures_file}")
+    logging.info(f"Fixtures saved to: {fixtures_file}")
 
 def generate_division_league(teams, parent_dir, division_name=None):
     """Generate league schedule for a division."""
@@ -102,7 +113,7 @@ def generate_division_league(teams, parent_dir, division_name=None):
     template_path = Path("samples/clean/Hoja Limpia Acta.xlsx")
     
     if not template_path.exists():
-        print(f"Template file not found: {template_path}")
+        logging.error(f"Template file not found: {template_path}")
         return
     
     # Create date folders under Fixtures folder
@@ -119,7 +130,7 @@ def generate_division_league(teams, parent_dir, division_name=None):
     for existing_folder in base_dir.glob("J*"):
         if existing_folder.is_dir():
             shutil.rmtree(existing_folder)
-            print(f"Removed: {existing_folder}")
+            logging.info(f"Removed: {existing_folder}")
     
     for date_num, round_matches in enumerate(schedule, 1):
         date_folder = base_dir / f"J{date_num}"
@@ -145,10 +156,10 @@ def generate_division_league(teams, parent_dir, division_name=None):
                 "visitante": team2
             })
             
-            print(f"Created: {match_file}")
+            logging.debug(f"Created: {match_file}")
     
     total_matches = sum(len(round_matches) for round_matches in schedule)
-    print(f"\nLeague generated with {len([t for t in teams if t != 'BYE'])} teams, {total_matches} matches across {total_dates} dates.")
+    logging.info(f"League generated with {len([t for t in teams if t != 'BYE'])} teams, {total_matches} matches across {total_dates} dates.")
     
     return fixtures_json
 
@@ -159,7 +170,7 @@ def generate_from_pairings(league_folder, pairings_file):
     
     template_path = Path("samples/clean/Hoja Limpia Acta.xlsx")
     if not template_path.exists():
-        print(f"Template file not found: {template_path}")
+        logging.error(f"Template file not found: {template_path}")
         return
     
     league_path = Path(league_folder)
@@ -191,13 +202,13 @@ def generate_from_pairings(league_folder, pairings_file):
                 ws.cell(row=2, column=3, value=team2)
                 wb.save(match_file)
                 
-                print(f"Created: {match_file}")
+                logging.debug(f"Created: {match_file}")
     
     # Save pairings as fixtures.json
     fixtures_file = fixtures_dir / "fixtures.json"
     with open(fixtures_file, 'w', encoding='utf-8') as f:
         json.dump(pairings, f, indent=2, ensure_ascii=False)
-    print(f"\nFixtures saved to: {fixtures_file}")
+    logging.info(f"Fixtures saved to: {fixtures_file}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -215,10 +226,10 @@ if __name__ == "__main__":
             try:
                 num_divisions = int(sys.argv[idx + 1])
                 if num_divisions <= 0:
-                    print("Error: divisions must be a positive integer.")
+                    logging.error("divisions must be a positive integer.")
                     sys.exit(1)
             except ValueError:
-                print("Error: divisions must be a positive integer.")
+                logging.error("divisions must be a positive integer.")
                 sys.exit(1)
     
     # Parse --pairings parameter

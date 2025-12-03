@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('update_classification.log'),
+        logging.StreamHandler()
+    ]
+)
 import sys
 import json
 from pathlib import Path
@@ -79,16 +90,16 @@ def process_date_folder(date_folder, date_data, settings):
                     "points": settings["league_points"][result_c]
                 }
             
-            print(f"Processed: {date_folder.parent.name}/{date_folder.name}/{file_path.name} - {team_b} vs {team_c}")
+            logging.info(f"Processed: {date_folder.parent.name}/{date_folder.name}/{file_path.name} - {team_b} vs {team_c}")
         except Exception as e:
-            print(f"Error reading {file_path.name}: {e}")
+            logging.error(f"Error reading {file_path.name}: {e}")
 
 def read_excel_files(folder_path):
     """Read Excel files from division and date subfolders and extract team data to JSON."""
     folder = Path(folder_path)
     
     if not folder.exists():
-        print(f"Error: Folder '{folder_path}' does not exist.")
+        logging.error(f"Folder '{folder_path}' does not exist.")
         return
     
     # Look for Fixtures subfolder
@@ -224,7 +235,7 @@ def generate_classification_table(league_data, output_folder, fixtures_folder=No
     with open(markdown_file, 'w') as f:
         f.write(markdown)
     
-    print(f"Classification table saved to: {markdown_file}")
+    logging.info(f"Classification table saved to: {markdown_file}")
 
 def generate_overall_classification(league_data, output_folder, fixtures_folder):
     """Generate league classification with separate tables for each division"""
@@ -301,11 +312,11 @@ def generate_overall_classification(league_data, output_folder, fixtures_folder)
     with open(markdown_file, 'w') as f:
         f.write(markdown)
     
-    print(f"League classification saved to: {markdown_file}")
+    logging.info(f"League classification saved to: {markdown_file}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python update_classification.py <league_folder_path>")
+        logging.error("Usage: python update_classification.py <league_folder_path>")
         sys.exit(1)
     
     folder_path = sys.argv[1]
