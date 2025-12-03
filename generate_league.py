@@ -152,8 +152,8 @@ def generate_division_league(teams, parent_dir, division_name=None):
             
             # Add to fixtures JSON
             fixtures_json[date_key].append({
-                "local": team1,
-                "visitante": team2
+                "home": team1,
+                "away": team2
             })
             
             logging.debug(f"Created: {match_file}")
@@ -190,8 +190,8 @@ def generate_from_pairings(league_folder, pairings_file):
             division_folder.mkdir(parents=True, exist_ok=True)
             
             for i, match in enumerate(matches, 1):
-                team1 = match['local']
-                team2 = match['visitante']
+                team1 = match['home']
+                team2 = match['away']
                 
                 match_file = division_folder / f"Match_{i}_{team1}_vs_{team2}.xlsx"
                 shutil.copy2(template_path, match_file)
