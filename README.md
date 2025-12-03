@@ -33,11 +33,12 @@ pip install -r requirements.txt
 
 ### Generate League Schedule
 ```bash
-python generate_league.py <league_folder_path> [--divisions N]
+python generate_league.py <league_folder_path> [--divisions N] [--pairings <json_file>]
 ```
 
 **Options:**
 - `--divisions N`: Split teams randomly into N equal-sized divisions (requires teams to be evenly divisible)
+- `--pairings <json_file>`: Use manual pairings from JSON file instead of automatic round-robin generation
 
 ### Process Match Results
 ```bash
@@ -51,6 +52,9 @@ python generate_league.py league_output
 
 # Generate league and split 16 teams into 2 divisions
 python generate_league.py league_output --divisions 2
+
+# Generate league from manual pairings JSON
+python generate_league.py league_output --pairings samples/Rondas/manual_pairings.json
 
 # Process match results and generate classification
 python update_classification.py league_output
@@ -182,9 +186,29 @@ Blood Bowl star points system configuration
 The `generate_league.py` script:
 - Scans the `Rosters` folder for team PDF files
 - Detects existing divisions (subfolders) or creates them with `--divisions` flag
-- Generates round-robin schedules for each division
+- Generates round-robin schedules for each division (or uses manual pairings with `--pairings`)
 - Creates Excel match report templates in `Fixtures/` folder
 - Outputs `fixtures.json` with all match pairings
+
+**Manual Pairings Format:**
+```json
+{
+  "J1": {
+    "Division 1": [
+      {"local": "Team1", "visitante": "Team2"},
+      {"local": "Team3", "visitante": "Team4"}
+    ],
+    "Division 2": [
+      {"local": "Team5", "visitante": "Team6"}
+    ]
+  },
+  "J2": {
+    "Division 1": [
+      {"local": "Team2", "visitante": "Team3"}
+    ]
+  }
+}
+```
 
 ### 2. Fill Match Reports
 

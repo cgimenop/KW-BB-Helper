@@ -7,10 +7,15 @@ from itertools import combinations
 import openpyxl
 import random
 
-def generate_league(roosters_folder, num_divisions=None):
+def generate_league(roosters_folder, num_divisions=None, pairings_file=None):
     """Generate league pairings and create match templates."""
     roosters_path = Path(roosters_folder)
     fixtures_data = {}
+    
+    # If pairings file provided, use manual pairings
+    if pairings_file:
+        generate_from_pairings(roosters_folder, pairings_file)
+        return
     
     # If path is a directory, look for Rosters subfolder
     if roosters_path.is_dir() and not any(roosters_path.glob("*.pdf")):
@@ -147,13 +152,61 @@ def generate_division_league(teams, parent_dir, division_name=None):
     
     return fixtures_json
 
+def generate_from_pairings(league_folder, pairings_file):
+    """Generate fixtures from manual pairings JSON file."""
+    with open(pairings_file, 'r', encoding='utf-8') as f:
+        pairings = json.load(f)
+    
+    template_path = Path("samples/clean/Hoja Limpia Acta.xlsx")
+    if not template_path.exists():
+        print(f"Template file not found: {template_path}")
+        return
+    
+    league_path = Path(league_folder)
+    fixtures_dir = league_path / "Fixtures"
+    fixtures_dir.mkdir(exist_ok=True)
+    
+    # Wipe previous fixtures
+    if fixtures_dir.exists():
+        for item in fixtures_dir.iterdir():
+            if item.is_dir():
+                shutil.rmtree(item)
+    
+    # Process each round (J1, J2, etc.)
+    for round_name, divisions in pairings.items():
+        for division_name, matches in divisions.items():
+            division_folder = fixtures_dir / division_name / round_name
+            division_folder.mkdir(parents=True, exist_ok=True)
+            
+            for i, match in enumerate(matches, 1):
+                team1 = match['local']
+                team2 = match['visitante']
+                
+                match_file = division_folder / f"Match_{i}_{team1}_vs_{team2}.xlsx"
+                shutil.copy2(template_path, match_file)
+                
+                wb = openpyxl.load_workbook(match_file)
+                ws = wb.active
+                ws.cell(row=2, column=2, value=team1)
+                ws.cell(row=2, column=3, value=team2)
+                wb.save(match_file)
+                
+                print(f"Created: {match_file}")
+    
+    # Save pairings as fixtures.json
+    fixtures_file = fixtures_dir / "fixtures.json"
+    with open(fixtures_file, 'w', encoding='utf-8') as f:
+        json.dump(pairings, f, indent=2, ensure_ascii=False)
+    print(f"\nFixtures saved to: {fixtures_file}")
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python generate_league.py <league_folder_path> [--divisions N]")
+        print("Usage: python generate_league.py <league_folder_path> [--divisions N] [--pairings <json_file>]")
         sys.exit(1)
     
     roosters_folder = sys.argv[1]
     num_divisions = None
+    pairings_file = None
     
     # Parse --divisions parameter
     if "--divisions" in sys.argv:
@@ -168,4 +221,10 @@ if __name__ == "__main__":
                 print("Error: divisions must be a positive integer.")
                 sys.exit(1)
     
-    generate_league(roosters_folder, num_divisions)
+    # Parse --pairings parameter
+    if "--pairings" in sys.argv:
+        idx = sys.argv.index("--pairings")
+        if idx + 1 < len(sys.argv):
+            pairings_file = sys.argv[idx + 1]
+    
+    generate_league(roosters_folder, num_divisions, pairings_file)
