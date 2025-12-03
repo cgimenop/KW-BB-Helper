@@ -55,7 +55,7 @@ def generate_league(roosters_folder, num_divisions=None):
         teams_per_division = len(teams) // num_divisions
         
         for i in range(num_divisions):
-            division_name = f"Grupo {i + 1}"
+            division_name = f"Division {i + 1}"
             division_teams = teams[i * teams_per_division:(i + 1) * teams_per_division]
             print(f"\nProcessing division: {division_name}")
             division_fixtures = generate_division_league(division_teams, roosters_path.parent, division_name)
