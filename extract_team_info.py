@@ -10,21 +10,29 @@ import html
 import unicodedata
 
 def extract_team_info(folder_path):
-    """Extract team information from PDFs in Rooster subfolder."""
-    rooster_folder = Path(folder_path) / "Roosters"
+    """Extract team information from PDFs in Rosters subfolder."""
+    rooster_folder = Path(folder_path) / "Rosters"
     teams_data = {}
 
     if not rooster_folder.exists():
-        print(f"Error: Rooster folder not found in '{folder_path}'")
+        print(f"Error: Rosters folder not found in '{folder_path}'")
         return
 
     # Check if there are division folders or direct PDFs
     pdf_files = list(rooster_folder.glob("*.pdf"))
+    division_map = {}  # Map PDF files to their division
+    
     if not pdf_files:
         # Look in division subfolders
         for division_folder in rooster_folder.iterdir():
-            if division_folder.is_dir():
-                pdf_files.extend(division_folder.glob("*.pdf"))
+            if division_folder.is_dir() and division_folder.name != "logos":
+                for pdf in division_folder.glob("*.pdf"):
+                    pdf_files.append(pdf)
+                    division_map[pdf] = division_folder.name
+    else:
+        # All PDFs in root, no divisions
+        for pdf in pdf_files:
+            division_map[pdf] = "Division 1"
 
     for pdf_file in pdf_files:
             try:
@@ -101,6 +109,7 @@ def extract_team_info(folder_path):
 
                 teams_data[team_name] = {
                     "team_name": team_name,
+                    "group": division_map.get(pdf_file, "Division 1"),
                     "logo_base64": logo_base64,
                     "font_color": font_color,
                     "background_color": background_color

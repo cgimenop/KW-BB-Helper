@@ -56,8 +56,13 @@ def generate_league(teams_json_path, output_folder, cross_division=False, pairin
     if not output_path.exists():
         output_path.mkdir(parents=True)
     
+    # Determine teams_info.json path
+    teams_json = Path(teams_json_path)
+    if teams_json.is_dir():
+        teams_json = teams_json / "Rosters" / "teams_info.json"
+    
     # Get teams grouped by division
-    divisions = load_teams_with_divisions(teams_json_path)
+    divisions = load_teams_with_divisions(teams_json)
     
     if not divisions:
         print("No teams found.")
@@ -90,8 +95,8 @@ def generate_league(teams_json_path, output_folder, cross_division=False, pairin
                 division_folder.mkdir(parents=True, exist_ok=True)
                 
                 for i, match in enumerate(matches, 1):
-                    team1 = match['local']
-                    team2 = match['visitante']
+                    team1 = match['home']
+                    team2 = match['away']
                     
                     match_file = division_folder / f"Match_{i}_{team1}_vs_{team2}.xlsx"
                     shutil.copy2(template_path, match_file)
@@ -233,12 +238,13 @@ def generate_cross_division_matches(divisions):
     return generate_division_schedule(all_teams)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python generate_league.py <teams_json_path> <output_folder_path> [--cross-division] [--pairings-json <path>] [--test-mode]")
+    if len(sys.argv) < 2:
+        print("Usage: python generate_league.py <league_folder> [--cross-division] [--pairings-json <path>] [--test-mode]")
         sys.exit(1)
     
-    teams_json_path = sys.argv[1]
-    output_folder = sys.argv[2]
+    league_folder = sys.argv[1]
+    teams_json_path = league_folder
+    output_folder = league_folder
     cross_division = "--cross-division" in sys.argv
     test_mode = "--test-mode" in sys.argv
     
