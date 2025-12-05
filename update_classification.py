@@ -12,6 +12,11 @@ def load_settings():
     except FileNotFoundError:
         return {
             "league_points": {"win": 3, "draw": 1, "lose": 0},
+            "bonus_points": {
+                "high_touchdowns": {"threshold": 3, "points": 1},
+                "high_injuries": {"threshold": 3, "points": 1},
+                "clean_sheet": {"threshold": 0, "points": 1}
+            },
             "sorting_criteria": [
                 {"field": "points", "order": "desc"},
                 {"field": "touchdowns", "order": "desc"},
@@ -53,6 +58,7 @@ def process_date_folder(date_folder, date_data, settings, league_path):
             
             match_played = not (td_b_empty and td_c_empty)
             
+            bonus_b = bonus_c = 0
             if match_played:
                 # If one is empty and the other has value, treat empty as 0
                 if td_b_empty:
@@ -67,6 +73,36 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     result_b, result_c = "lose", "win"
                 else:
                     result_b = result_c = "draw"
+                
+                # Calculate bonus points
+                bonus_cfg = settings.get("bonus_points", {})
+                if bonus_cfg:
+                    # High touchdowns bonus
+                    if "high_touchdowns" in bonus_cfg:
+                        td_threshold = bonus_cfg["high_touchdowns"]["threshold"]
+                        td_bonus = bonus_cfg["high_touchdowns"]["points"]
+                        if touchdowns_b >= td_threshold:
+                            bonus_b += td_bonus
+                        if touchdowns_c >= td_threshold:
+                            bonus_c += td_bonus
+                    
+                    # High injuries bonus
+                    if "high_injuries" in bonus_cfg:
+                        inj_threshold = bonus_cfg["high_injuries"]["threshold"]
+                        inj_bonus = bonus_cfg["high_injuries"]["points"]
+                        if injuries_b >= inj_threshold:
+                            bonus_b += inj_bonus
+                        if injuries_c >= inj_threshold:
+                            bonus_c += inj_bonus
+                    
+                    # Clean sheet bonus (rival scored 0 TDs)
+                    if "clean_sheet" in bonus_cfg:
+                        cs_threshold = bonus_cfg["clean_sheet"]["threshold"]
+                        cs_bonus = bonus_cfg["clean_sheet"]["points"]
+                        if touchdowns_c <= cs_threshold:
+                            bonus_b += cs_bonus
+                        if touchdowns_b <= cs_threshold:
+                            bonus_c += cs_bonus
             else:
                 # Match not played - keep as pending
                 result_b = result_c = "pending"
@@ -77,6 +113,7 @@ def process_date_folder(date_folder, date_data, settings, league_path):
 
             if team_b != "nan":
                 team_b_info = team_info.get(team_b, {})
+                base_points_b = settings["league_points"][result_b] if match_played else 0
                 date_data[team_b] = {
                     "touchdowns": touchdowns_b,
                     "cash": df.iloc[4, 1] if len(df) > 4 else 0,
@@ -85,7 +122,8 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "injuries": injuries_b,
                     "result": result_b,
                     "rival": team_c,
-                    "points": settings["league_points"][result_b] if match_played else 0,
+                    "points": base_points_b + bonus_b,
+                    "bonus_points": bonus_b,
                     "logo_base64": team_b_info.get("logo_base64", ""),
                     "font_color": team_b_info.get("font_color", "#000000"),
                     "background_color": team_b_info.get("background_color", "#ffffff")
@@ -93,6 +131,7 @@ def process_date_folder(date_folder, date_data, settings, league_path):
 
             if team_c != "nan":
                 team_c_info = team_info.get(team_c, {})
+                base_points_c = settings["league_points"][result_c] if match_played else 0
                 date_data[team_c] = {
                     "touchdowns": touchdowns_c,
                     "cash": df.iloc[4, 2] if len(df) > 4 else 0,
@@ -101,7 +140,8 @@ def process_date_folder(date_folder, date_data, settings, league_path):
                     "injuries": injuries_c,
                     "result": result_c,
                     "rival": team_b,
-                    "points": settings["league_points"][result_c] if match_played else 0,
+                    "points": base_points_c + bonus_c,
+                    "bonus_points": bonus_c,
                     "logo_base64": team_c_info.get("logo_base64", ""),
                     "font_color": team_c_info.get("font_color", "#000000"),
                     "background_color": team_c_info.get("background_color", "#ffffff")

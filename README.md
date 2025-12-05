@@ -1,18 +1,15 @@
-# KW BB League - Excel Data Processor
+# KW BB League - Blood Bowl League Manager
 
-A Python tool for managing Blood Bowl league data, processing Excel match reports, and generating league classifications.
+A Python tool for managing Blood Bowl league data, processing Excel match reports, and generating league classifications with automatic fixture generation.
 
 ## Features
 
 - **League Generation**: Create round-robin tournament schedules from team rosters
+- **Division Support**: Automatic division detection or random team splitting
 - **Match Processing**: Read Excel match reports and extract team statistics
-- **Classification**: Generate league tables with points, wins, draws, losses
-- **Team Information**: Extract team names, logos, and colors from PDF files with Unicode normalization
-- **Enhanced Tables**: Classification tables include team logos and colors with correct relative paths
-- **Configurable Scoring**: Customizable point systems for league and star points
-- **Pending Match Handling**: Matches with empty touchdowns are marked as pending without affecting standings
-- **Injury Tracking**: Tracks injuries caused by each team from match reports
-- **Test Mode**: Generate fixtures with random match data for testing
+- **Classification**: Generate league tables with points, wins, draws, losses, touchdowns
+- **Configurable Sorting**: Customizable classification sorting criteria
+- **Fixtures JSON**: Automatic generation of fixtures in JSON format
 - **Automated Reports**: Output JSON data and Markdown classification tables
 
 ## Installation
@@ -36,88 +33,106 @@ pip install -r requirements.txt
 
 ### Generate League Schedule
 ```bash
-python generate_league.py <teams_json_path> <output_folder_path> [--cross-division] [--test-mode]
+python generate_league.py <league_folder> [--divisions N]
 ```
+
+**Options:**
+- `--divisions N`: Split teams randomly into N equal-sized divisions (requires teams to be evenly divisible)
 
 ### Process Match Results
 ```bash
-python update_classification.py <league_folder_path>
-```
-
-### Extract Team Information
-```bash
-python extract_team_info.py <league_folder_path>
+python update_classification.py <league_folder>
 ```
 
 ### Examples
 ```bash
-# Extract team info from PDFs
-python extract_team_info.py league_output
+# Generate league from existing divisions
+python generate_league.py league_folder
 
-# Generate division-only fixtures (default)
-python generate_league.py league_output/Roosters/teams_info.json league_output
+# Generate league and split 16 teams into 2 divisions
+python generate_league.py league_folder --divisions 2
 
-# Process match results and generate classifications
-python update_classification.py league_output
-
-# Generate with cross-division matches
-python generate_league.py league_output/Roosters/teams_info.json league_output --cross-division
-
-# Generate with test data (random touchdowns and injuries)
-python generate_league.py league_output/Roosters/teams_info.json league_output --test-mode
+# Process match results and generate classification
+python update_classification.py league_folder
 ```
 
 ## Folder Structure
 
-### Workflow Structure
+### Input Structure
+
+The script expects a league folder with the following structure:
+
+**Option 1: Pre-organized divisions**
 ```
-project/
-├── league_output/      # Generated league structure
-│   ├── Roosters/      # Team information
-│   │   ├── Grupo 1/   # Division 1 team PDFs
-│   │   ├── Grupo 2/   # Division 2 team PDFs
-│   │   ├── logos/     # Extracted team logos
-│   │   └── teams_info.json # Team data (names, colors, logos)
-│   ├── Fixtures/      # All match fixtures
-│   │   ├── Grupo 1/   # Division 1 fixtures
-│   │   │   └── J1/, J2/... # Match date folders with Excel files
-│   │   ├── Grupo 2/   # Division 2 fixtures
-│   │   │   └── J1/, J2/... # Match date folders with Excel files
-│   │   └── Cross-Division/ # Cross-division matches (optional)
-│   │       └── J1/, J2/... # Match date folders
-│   ├── Grupo 1/       # Division 1 classification
-│   │   └── classification.md
-│   ├── Grupo 2/       # Division 2 classification
-│   │   └── classification.md
-│   ├── league_data.json # Complete match results
-│   └── league_classification.md # Combined classification
-└── samples/clean/      # Excel template
+league_folder/
+└── Roosters/
+    ├── Division 1/
+    │   ├── Team1.pdf
+    │   ├── Team2.pdf
+    │   └── Team3.pdf
+    └── Division 2/
+        ├── Team4.pdf
+        ├── Team5.pdf
+        └── Team6.pdf
+```
+
+**Option 2: All teams in Roosters (use --divisions flag)**
+```
+league_folder/
+└── Roosters/
+    ├── Team1.pdf
+    ├── Team2.pdf
+    ├── Team3.pdf
+    ├── Team4.pdf
+    ├── Team5.pdf
+    └── Team6.pdf
+```
+
+### Output Structure
+
+After running `generate_league.py` and `update_classification.py`:
+
+```
+league_folder/
+├── Roosters/
+│   ├── Division 1/          # Division folders with team PDFs
+│   └── Division 2/
+├── Fixtures/
+│   ├── fixtures.json     # Generated fixtures in JSON format
+│   ├── Division 1/
+│   │   ├── J1/           # Match date folders
+│   │   │   ├── Match_1_Team1_vs_Team2.xlsx
+│   │   │   └── Match_2_Team3_vs_Team4.xlsx
+│   │   └── J2/
+│   └── Division 2/
+│       ├── J1/
+│       └── J2/
+└── Classification/
+    ├── league_data.json           # Complete match data
+    ├── league_classification.md   # Overall classification
+    ├── Division 1/
+    │   └── classification.md      # Division-specific classification
+    └── Division 2/
+        └── classification.md
 ```
 
 ## Output Files
 
-### Single Division
-- `league_output/league_data.json` - Complete match data by dates and teams
-- `league_output/classification.md` - League classification table
+### Fixtures Folder
+- `Fixtures/fixtures.json` - Generated fixtures in JSON format (compatible with manual pairings)
+- `Fixtures/Division X/JY/*.xlsx` - Excel match report templates
 
-### Multiple Divisions
-- `league_output/league_data.json` - Complete match data by divisions, dates and teams
-- `league_output/DivisionName/classification.md` - Division-specific classification tables (with ../ relative paths)
-- `league_output/league_classification.md` - Combined classification with all divisions
-- `league_output/Roosters/teams_info.json` - Team information (names, logos, colors)
+### Classification Folder
+- `Classification/league_data.json` - Complete match data by divisions, dates and teams
+- `Classification/league_classification.md` - Combined classification with all divisions
+- `Classification/Division X/classification.md` - Division-specific classification tables
 
-## Match Status
+## Match Processing
 
-- **Played**: Both teams have touchdown values - match counts toward standings (including injuries)
-- **Pending**: Both teams have empty touchdown values - match displayed but doesn't affect standings
-- **Partial**: One team has touchdown value, other is empty - empty treated as 0 and match is played
-
-## Injuries
-
-Injuries are tracked from the "Lesionados" row in match reports:
-- Format: Comma-separated player numbers (e.g., "3,7,12")
-- Each number represents a player who caused an injury to a rival
-- Total injuries are accumulated in the classification table under the "INJ" column
+### Match Status
+- **Not Played**: Both touchdown fields are empty - match is skipped in classification
+- **Played**: Both teams have touchdown values - match counts toward standings
+- **Partial**: One team has touchdown value, other is empty - empty treated as 0
 
 ## Configuration
 
@@ -135,33 +150,24 @@ Configures league points and classification sorting criteria:
   "sorting_criteria": [
     {"field": "points", "order": "desc"},
     {"field": "touchdowns", "order": "desc"},
-    {"field": "injuries", "order": "desc"}
+    {"field": "wins", "order": "desc"}
   ]
 }
 ```
 
-**Sorting Criteria Options:**
-- `field`: Available fields are `"points"`, `"wins"`, `"draws"`, `"losses"`, `"touchdowns"`, `"injuries"`
-- `order`: Use `"desc"` for descending (highest first) or `"asc"` for ascending (lowest first)
-- Criteria are applied in order: first criterion is primary, second is tiebreaker, etc.
+**Sorting Criteria:**
+- Teams are sorted by multiple criteria in order (first is primary, second is tiebreaker, etc.)
+- Available fields: `"points"`, `"wins"`, `"draws"`, `"losses"`, `"touchdowns"`
+- Order: `"desc"` (descending/highest first) or `"asc"` (ascending/lowest first)
 
-**Example Configurations:**
+**Example configurations:**
 
-Prioritize wins over touchdowns:
-```json
-"sorting_criteria": [
-  {"field": "points", "order": "desc"},
-  {"field": "wins", "order": "desc"},
-  {"field": "touchdowns", "order": "desc"}
-]
-```
-
-Fewer injuries is better (defensive teams):
+Prioritize goal difference over wins:
 ```json
 "sorting_criteria": [
   {"field": "points", "order": "desc"},
   {"field": "touchdowns", "order": "desc"},
-  {"field": "injuries", "order": "asc"}
+  {"field": "losses", "order": "asc"}
 ]
 ```
 
@@ -169,13 +175,32 @@ Fewer injuries is better (defensive teams):
 
 Blood Bowl star points system configuration
 
-## Technical Details
+## How It Works
 
-- **Unicode Normalization**: Team names are normalized using NFC form to handle accented characters correctly
-- **HTML Entity Decoding**: Handles HTML entities in PDF text extraction
-- **Relative Paths**: Division-specific classifications use relative paths (../) for logo references
-- **Injury Counting**: Injuries are counted from comma-separated player numbers in the "Lesionados" row
-- **Test Mode**: Generates random touchdowns (0-5) and injuries (0-5 player numbers between 1-15)
+### 1. Generate League
+
+The `generate_league.py` script:
+- Scans the `Roosters` folder for team PDF files
+- Detects existing divisions (subfolders) or creates them with `--divisions` flag
+- Generates round-robin schedules for each division
+- Creates Excel match report templates in `Fixtures/` folder
+- Outputs `fixtures.json` with all match pairings
+
+### 2. Fill Match Reports
+
+Manually fill in the Excel files in `Fixtures/Division X/JY/` with:
+- Touchdowns (row 4, columns B and C)
+- Leave empty if match not played
+
+### 3. Generate Classification
+
+The `update_classification.py` script:
+- Reads all Excel files from `Fixtures/` folder
+- Processes only matches with touchdown data
+- Calculates points, wins, draws, losses
+- Sorts teams according to `sorting_criteria` in config
+- Generates classification tables in `Classification/` folder
+- Lists all teams even if no matches played yet
 
 ## Development
 

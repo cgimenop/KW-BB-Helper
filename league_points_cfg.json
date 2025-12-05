@@ -4,6 +4,11 @@
     "draw": 1,
     "lose": 0
   },
+  "bonus_points": {
+    "high_touchdowns": {"threshold": 3, "points": 1},
+    "high_injuries": {"threshold": 3, "points": 1},
+    "clean_sheet": {"threshold": 0, "points": 1}
+  },
   "sorting_criteria": [
     {"field": "points", "order": "desc"},
     {"field": "touchdowns", "order": "desc"},
