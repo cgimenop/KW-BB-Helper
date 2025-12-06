@@ -12,6 +12,78 @@ A Python tool for managing Blood Bowl league data, processing Excel match report
 - **Fixtures JSON**: Automatic generation of fixtures in JSON format
 - **Automated Reports**: Output JSON data and Markdown classification tables
 
+## Quick Start
+
+### Step-by-Step: Create a League
+
+**Option A: Automatic Round-Robin Schedule**
+
+1. **Prepare your roster PDFs** in one of these structures:
+   ```
+   league_folder/Rosters/Division 1/*.pdf
+   league_folder/Rosters/Division 2/*.pdf
+   ```
+   OR
+   ```
+   league_folder/Rosters/*.pdf  (use --divisions flag to split)
+   ```
+
+2. **Extract team information:**
+   ```bash
+   python extract_team_info.py league_folder
+   ```
+   This creates `Rosters/teams_info.json` with team names, divisions, logos, and colors.
+
+3. **Generate league fixtures:**
+   ```bash
+   python generate_league.py league_folder
+   ```
+   OR split teams into divisions:
+   ```bash
+   python generate_league.py league_folder --divisions 2
+   ```
+   This creates Excel match templates in `Fixtures/Division X/JY/`.
+
+4. **Fill in match results** in the Excel files (touchdowns in row 4, injuries in row 14).
+
+5. **Generate classification:**
+   ```bash
+   python update_classification.py league_folder
+   ```
+   This creates standings in `Classification/` folder.
+
+**Option B: Manual Pairings from JSON**
+
+1. **Prepare your roster PDFs** (same as Option A).
+
+2. **Extract team information:**
+   ```bash
+   python extract_team_info.py league_folder
+   ```
+
+3. **Create a pairings JSON file** (see Manual Pairings section for format):
+   ```json
+   {
+     "J1": {
+       "Division 1": [
+         {"home": "Team A", "away": "Team B"}
+       ]
+     }
+   }
+   ```
+
+4. **Generate league from pairings:**
+   ```bash
+   python generate_league.py league_folder --pairings-json path/to/pairings.json
+   ```
+
+5. **Fill in match results** in the Excel files.
+
+6. **Generate classification:**
+   ```bash
+   python update_classification.py league_folder
+   ```
+
 ## Installation
 
 1. Create virtual environment:
